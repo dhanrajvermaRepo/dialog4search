@@ -41,7 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            SearchDialog<Person>(
+            Dialog4Search<Person>(
 //              multipleSelect: true,
               searchFunction: (person, value) {
                 return person.fathersName

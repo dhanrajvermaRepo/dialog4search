@@ -1,8 +1,8 @@
 name: dialog4search
 description: A package in which user can search for an item in a given list.
 version: 0.0.1
-author:
-homepage:
+author: Dhanraj Verma<dhanrajverma57@gmail.com>
+homepage: https://github.com/dhanrajvermaRepo/dialog4search/blob/master/lib/dialog4search.dart
 
 environment:
   sdk: ">=2.7.0 <3.0.0"

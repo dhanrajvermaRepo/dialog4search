@@ -1,13 +1,17 @@
 library dialog4search;
+
 import 'package:flutter/material.dart';
 
-class SearchDialog<T> extends StatefulWidget {
-  //search algorithm
+class Dialog4Search<T> extends StatefulWidget {
+  //Using this function user will define search conditions.
   final bool Function(T, String) searchFunction;
-  //list in which we are going to search items;
+  //List in which we are going to search items;
   final List<T> list;
+  //tapping on this widget will open the dialog.
   final Widget Function(BuildContext, T) builder;
+  //This builder is used to build the list items in the dialog.
   final Widget Function(BuildContext, T) itemBuilder;
+  //sets the initial value.
   final T initialValue;
   final Function(T) onInitialization;
   final Function(List<T>) onChanged;
@@ -18,40 +22,69 @@ class SearchDialog<T> extends StatefulWidget {
   final ShapeBorder dialogShape;
   final bool multipleSelect;
   final Widget selectionIcon;
-  SearchDialog(
+  Dialog4Search(
       {@required this.searchFunction,
-        @required this.itemBuilder,
-        @required this.list,
-        @required this.builder,
-        this.initialValue,
-        this.onChanged,
-        this.onInitialization,
-        this.searchBoxDecoration,
-        this.dialogShape,
-        this.dialogBoxBackgroundColor,
-        this.dialogBoxConstraint,
-        this.noMatchBuilder,
-        this.multipleSelect = false,
-        this.selectionIcon})
+      @required this.itemBuilder,
+      @required this.list,
+      @required this.builder,
+      this.initialValue,
+      this.onChanged,
+      this.onInitialization,
+      this.searchBoxDecoration,
+      this.dialogShape,
+      this.dialogBoxBackgroundColor,
+      this.dialogBoxConstraint,
+      this.noMatchBuilder,
+      this.multipleSelect = false,
+      this.selectionIcon})
       : assert(searchFunction != null),
         assert(itemBuilder != null),
         assert(builder != null),
         assert(list != null && list.length > 0);
   @override
   State<StatefulWidget> createState() {
-    return _SearchDialogState<T>();
+    return _Dialog4SearchState<T>();
   }
 }
 
-class _SearchDialogState<T> extends State<SearchDialog<T>> {
-  T _selectedItem;
-  @override
-  void initState() {
-    _selectedItem = widget.initialValue ?? widget.list[0];
-    if (widget.onInitialization != null) widget.onInitialization(_selectedItem);
-    super.initState();
-  }
+class ListItem<T> {
+  bool selected;
+  T item;
+  ListItem({this.item, this.selected});
+}
 
+class SelectionDialog<T> extends StatefulWidget {
+  final bool Function(T, String) searchFunction;
+  final List<T> list;
+  final Widget Function(BuildContext context, T) itemBuilder;
+  final InputDecoration searchBoxDecoration;
+  final BoxConstraints dialogBoxConstraint;
+  final WidgetBuilder noMatchBuilder;
+  final Color dialogBoxBackgroundColor;
+  final ShapeBorder dialogShape;
+  final bool multipleSelect;
+  final Function(List<T>) onChanged;
+  final Widget selectionIcon;
+  SelectionDialog(
+      {@required this.list,
+      @required this.searchFunction,
+      @required this.itemBuilder,
+      this.searchBoxDecoration,
+      this.dialogBoxConstraint,
+      this.noMatchBuilder,
+      this.dialogShape,
+      this.dialogBoxBackgroundColor,
+      this.multipleSelect,
+      this.onChanged,
+      this.selectionIcon});
+  @override
+  State<StatefulWidget> createState() {
+    return _SelectionDialog<T>();
+  }
+}
+
+class _Dialog4SearchState<T> extends State<Dialog4Search<T>> {
+  T _selectedItem;
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -85,65 +118,18 @@ class _SearchDialogState<T> extends State<SearchDialog<T>> {
       ),
     );
   }
-}
 
-class SelectionDialog<T> extends StatefulWidget {
-  final bool Function(T, String) searchFunction;
-  final List<T> list;
-  final Widget Function(BuildContext context, T) itemBuilder;
-  final InputDecoration searchBoxDecoration;
-  final BoxConstraints dialogBoxConstraint;
-  final WidgetBuilder noMatchBuilder;
-  final Color dialogBoxBackgroundColor;
-  final ShapeBorder dialogShape;
-  final bool multipleSelect;
-  final Function(List<T>) onChanged;
-  final Widget selectionIcon;
-  SelectionDialog(
-      {@required this.list,
-        @required this.searchFunction,
-        @required this.itemBuilder,
-        this.searchBoxDecoration,
-        this.dialogBoxConstraint,
-        this.noMatchBuilder,
-        this.dialogShape,
-        this.dialogBoxBackgroundColor,
-        this.multipleSelect,
-        this.onChanged,
-        this.selectionIcon});
   @override
-  State<StatefulWidget> createState() {
-    return _SelectionDialog<T>();
+  void initState() {
+    _selectedItem = widget.initialValue ?? widget.list[0];
+    if (widget.onInitialization != null) widget.onInitialization(_selectedItem);
+    super.initState();
   }
-}
-
-class ListItem<T> {
-  bool selected;
-  T item;
-  ListItem({this.item, this.selected});
 }
 
 class _SelectionDialog<T> extends State<SelectionDialog<T>> {
   List<ListItem<T>> _fliteredItems = [];
   List<ListItem<T>> _listItems;
-  _filter(String value) {
-    setState(() {
-      if (value.isNotEmpty)
-        _fliteredItems =_listItems.where((element) {
-          return widget.searchFunction(element.item, value);
-        }).toList();
-      else
-        _fliteredItems = _listItems;
-    });
-  }
-
-  @override
-  void initState() {
-    _listItems = widget.list.map<ListItem<T>>((e) => ListItem(item: e,selected: false)).toList();
-    _fliteredItems=_listItems;
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return SimpleDialog(
@@ -156,7 +142,7 @@ class _SelectionDialog<T> extends State<SelectionDialog<T>> {
         children: [
           IconButton(
               icon:
-              widget.multipleSelect ? Icon(Icons.check) : Icon(Icons.close),
+                  widget.multipleSelect ? Icon(Icons.check) : Icon(Icons.close),
               onPressed: () {
                 if (widget.multipleSelect) {
                   var items = _fliteredItems
@@ -205,7 +191,8 @@ class _SelectionDialog<T> extends State<SelectionDialog<T>> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Expanded(
-                                  child: widget.itemBuilder(context, item.item)),
+                                  child:
+                                      widget.itemBuilder(context, item.item)),
                               SizedBox(
                                 width: 15,
                               ),
@@ -226,7 +213,8 @@ class _SelectionDialog<T> extends State<SelectionDialog<T>> {
                                         ),
                                       ),
                                     ),
-                                opacity: _fliteredItems[index].selected?1:0.1,
+                                opacity:
+                                    _fliteredItems[index].selected ? 1 : 0.1,
                               ),
                               SizedBox(
                                 height: 20,
@@ -237,20 +225,11 @@ class _SelectionDialog<T> extends State<SelectionDialog<T>> {
                         onTap: () {
                           setState(() {
                             _fliteredItems[index].selected =
-                            !_fliteredItems[index].selected;
+                                !_fliteredItems[index].selected;
                           });
                         },
                       ),
                     );
-//                      CheckboxListTile(
-//                        value: _selectedItems[index].selected,
-//
-//                        title: widget.itemBuilder(context, item),
-//                        onChanged: (value) {
-//                          setState(() {
-//                            _selectedItems[index].selected = value;
-//                          });
-//                        });
                   return SimpleDialogOption(
                     child: widget.itemBuilder(context, item.item),
                     onPressed: () {
@@ -258,36 +237,39 @@ class _SelectionDialog<T> extends State<SelectionDialog<T>> {
                     },
                   );
                 },
-//                children: [
-//                  ..._fliteredItems
-//                      .map((e){
-//                        if(widget.multipleSelect){
-//                          return CheckboxListTile(value: _value, onChanged: null);
-//                        }else{
-//                          SimpleDialogOption(
-//                            child: widget.itemBuilder(context, e),
-//                            onPressed: () {
-//                              _selectItem(e);
-//                            },
-//                          )
-//                        }
-//                  }
-//                  )
-//                      .toList()
-//                ],
               ),
             ),
           )
         else
           widget.noMatchBuilder == null
               ? Container(
-            height: 100,
-            alignment: Alignment.center,
-            child: Text('No match!!'),
-          )
+                  height: 100,
+                  alignment: Alignment.center,
+                  child: Text('No match!!'),
+                )
               : widget.noMatchBuilder
       ],
     );
+  }
+
+  @override
+  void initState() {
+    _listItems = widget.list
+        .map<ListItem<T>>((e) => ListItem(item: e, selected: false))
+        .toList();
+    _fliteredItems = _listItems;
+    super.initState();
+  }
+
+  _filter(String value) {
+    setState(() {
+      if (value.isNotEmpty)
+        _fliteredItems = _listItems.where((element) {
+          return widget.searchFunction(element.item, value);
+        }).toList();
+      else
+        _fliteredItems = _listItems;
+    });
   }
 
   _selectItem(e) {
