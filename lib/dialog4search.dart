@@ -50,7 +50,8 @@ class Dialog4Search<T> extends StatefulWidget {
 class ListItem<T> {
   bool selected;
   T item;
-  ListItem({this.item, this.selected});
+  final int id;
+  ListItem({this.item, this.selected, @required this.id});
 }
 
 class SelectionDialog<T> extends StatefulWidget {
@@ -130,6 +131,7 @@ class _Dialog4SearchState<T> extends State<Dialog4Search<T>> {
 class _SelectionDialog<T> extends State<SelectionDialog<T>> {
   List<ListItem<T>> _fliteredItems = [];
   List<ListItem<T>> _listItems;
+  ValueNotifier<String> _searchPhrase = ValueNotifier("");
   @override
   Widget build(BuildContext context) {
     return SimpleDialog(
@@ -145,7 +147,7 @@ class _SelectionDialog<T> extends State<SelectionDialog<T>> {
                   widget.multipleSelect ? Icon(Icons.check) : Icon(Icons.close),
               onPressed: () {
                 if (widget.multipleSelect) {
-                  var items = _fliteredItems
+                  var items = _listItems
                       .where((element) => element.selected)
                       .toList()
                       .map<T>((e) => e.item)
@@ -167,109 +169,125 @@ class _SelectionDialog<T> extends State<SelectionDialog<T>> {
         ],
       ),
       children: [
-        if (_fliteredItems.length > 0)
-          ConstrainedBox(
-            constraints: widget.dialogBoxConstraint ??
-                BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.6,
-                  minWidth: MediaQuery.of(context).size.width - 100,
-                ),
-            child: Container(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _fliteredItems.length,
-                itemBuilder: (context, index) {
-                  var item = _fliteredItems[index];
-                  if (widget.multipleSelect)
-                    return Material(
-                      color: widget.dialogBoxBackgroundColor ?? Colors.white,
-                      child: InkWell(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 5),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                  child:
-                                      widget.itemBuilder(context, item.item)),
-                              SizedBox(
-                                width: 15,
-                              ),
-                              Opacity(
-                                child: widget.selectionIcon ??
-                                    SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: Container(
-                                        color: Theme.of(context).primaryColor,
-                                        alignment: Alignment.center,
-                                        child: Icon(
-                                          Icons.check,
-                                          color: Theme.of(context)
-                                              .primaryIconTheme
-                                              .color,
-                                          size: 15,
+        ValueListenableBuilder(
+            valueListenable: _searchPhrase,
+            builder: (context, value, _) {
+              return ConstrainedBox(
+                constraints: widget.dialogBoxConstraint ??
+                    BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.6,
+                    ),
+                child: Container(
+                  child: _fliteredItems.length > 0
+                      ? ListView.builder(
+                          itemCount: _fliteredItems.length,
+                          itemBuilder: (context, index) {
+                            var item = _fliteredItems[index];
+                            if (widget.multipleSelect)
+                              return Material(
+                                color: widget.dialogBoxBackgroundColor ??
+                                    Colors.white,
+                                child: InkWell(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 5),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                            child: widget.itemBuilder(
+                                                context, item.item)),
+                                        SizedBox(
+                                          width: 15,
                                         ),
-                                      ),
+                                        Opacity(
+                                          child: widget.selectionIcon ??
+                                              SizedBox(
+                                                height: 20,
+                                                width: 20,
+                                                child: Container(
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                  alignment: Alignment.center,
+                                                  child: Icon(
+                                                    Icons.check,
+                                                    color: Theme.of(context)
+                                                        .primaryIconTheme
+                                                        .color,
+                                                    size: 15,
+                                                  ),
+                                                ),
+                                              ),
+                                          opacity:
+                                              _fliteredItems[index].selected
+                                                  ? 1
+                                                  : 0.1,
+                                        ),
+                                        SizedBox(
+                                          height: 20,
+                                        )
+                                      ],
                                     ),
-                                opacity:
-                                    _fliteredItems[index].selected ? 1 : 0.1,
-                              ),
-                              SizedBox(
-                                height: 20,
-                              )
-                            ],
-                          ),
+                                  ),
+                                  onTap: () {
+                                    var listItemIndex = _listItems.indexWhere(
+                                            (element) =>
+                                        element.id ==
+                                            _fliteredItems[index].id);
+                                    setState(() {
+                                      _listItems[listItemIndex].selected =
+                                      !_listItems[listItemIndex].selected;
+                                    });
+                                  },
+                                ),
+                              );
+                            return SimpleDialogOption(
+                              child: widget.itemBuilder(context, item.item),
+                              onPressed: () {
+                                _selectItem(item.item);
+                              },
+                            );
+                          },
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            widget.noMatchBuilder == null
+                                ? Container(
+                                    height: 100,
+                                    child: Text('No match!!'),
+                                  )
+                                : widget.noMatchBuilder,
+                          ],
                         ),
-                        onTap: () {
-                          setState(() {
-                            _fliteredItems[index].selected =
-                                !_fliteredItems[index].selected;
-                          });
-                        },
-                      ),
-                    );
-                  return SimpleDialogOption(
-                    child: widget.itemBuilder(context, item.item),
-                    onPressed: () {
-                      _selectItem(item.item);
-                    },
-                  );
-                },
-              ),
-            ),
-          )
-        else
-          widget.noMatchBuilder == null
-              ? Container(
-                  height: 100,
-                  alignment: Alignment.center,
-                  child: Text('No match!!'),
-                )
-              : widget.noMatchBuilder
+                ),
+              );
+            })
       ],
     );
   }
 
   @override
   void initState() {
+    int id = 0;
     _listItems = widget.list
-        .map<ListItem<T>>((e) => ListItem(item: e, selected: false))
+        .map<ListItem<T>>(
+            (e) => ListItem(item: e, selected: false, id: id += 1))
         .toList();
     _fliteredItems = _listItems;
     super.initState();
   }
 
   _filter(String value) {
-    setState(() {
-      if (value.isNotEmpty)
-        _fliteredItems = _listItems.where((element) {
-          return widget.searchFunction(element.item, value);
-        }).toList();
-      else
-        _fliteredItems = _listItems;
-    });
+    _searchPhrase.value = value;
+    if (value.isNotEmpty)
+      _fliteredItems = _listItems.where((element) {
+        return widget.searchFunction(element.item, value);
+      }).toList();
+    else
+      _fliteredItems = _listItems;
   }
 
   _selectItem(e) {
